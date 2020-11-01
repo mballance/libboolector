@@ -1,0 +1,169 @@
+diff --git a/src/cadical.cpp b/src/cadical.cpp
+index e70015f..ddedb72 100644
+--- a/src/cadical.cpp
++++ b/src/cadical.cpp
+@@ -5,6 +5,11 @@
+ #include "internal.hpp"
+ #include "signal.hpp"           // Separate, only need for apps.
+ 
++#ifdef _WIN32
++#define popen _popen
++#define pclose _pclose
++#endif
++
+ /*------------------------------------------------------------------------*/
+ 
+ namespace CaDiCaL {
+diff --git a/src/file.cpp b/src/file.cpp
+index 01b2ec5..d419d3d 100644
+--- a/src/file.cpp
++++ b/src/file.cpp
+@@ -9,10 +9,21 @@ extern "C" {
+ #include <errno.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
++#ifndef _WIN32
+ #include <unistd.h>
++#endif
+ #include <stdlib.h>
+ }
+ 
++#ifdef _WIN32
++#define popen _popen
++#define pclose _pclose
++#define access _access
++#define R_OK 04
++#define W_OK 02
++#define S_ISDIR(m) (m & 0040000)
++#endif
++
+ /*------------------------------------------------------------------------*/
+ 
+ namespace CaDiCaL {
+diff --git a/src/internal.hpp b/src/internal.hpp
+index 1c85d4a..45c6b84 100644
+--- a/src/internal.hpp
++++ b/src/internal.hpp
+@@ -18,7 +18,11 @@
+ // Less common 'C' header.
+ 
+ extern "C" {
++#ifndef _WIN32
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ }
+ 
+ /*------------------------------------------------------------------------*/
+diff --git a/src/mobical.cpp b/src/mobical.cpp
+index 8cb82b3..c5c8547 100644
+--- a/src/mobical.cpp
++++ b/src/mobical.cpp
+@@ -120,7 +120,9 @@ static const char * USAGE =
+ /*------------------------------------------------------------------------*/
+ 
+ extern "C" {
++#ifndef _WIN32
+ #include <unistd.h>
++#endif
+ }
+ 
+ /*------------------------------------------------------------------------*/
+@@ -1459,9 +1461,11 @@ extern "C" {
+ #include <fcntl.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
++#ifndef _WIN32
+ #include <sys/wait.h>
+ #include <sys/resource.h>
+ #include <sys/time.h>
++#endif
+ }
+ 
+ int64_t Trace::generated;
+diff --git a/src/random.cpp b/src/random.cpp
+index bc3bdc9..cc05d4b 100644
+--- a/src/random.cpp
++++ b/src/random.cpp
+@@ -4,7 +4,9 @@
+ 
+ extern "C" {
+ #include <sys/types.h>
++#ifndef _WIN32
+ #include <unistd.h>
++#endif
+ }
+ 
+ namespace CaDiCaL {
+@@ -25,10 +27,13 @@ static uint64_t machine_identifier () {
+ }
+ 
+ Random::Random () : state (1) {
++// TODO:
++#ifndef _WIN32
+   add (machine_identifier ());
+   add (std::clock ());
+   add (::time (0));
+   add (getpid ());
++#endif
+ }
+ 
+ }
+diff --git a/src/resources.cpp b/src/resources.cpp
+index 56b5ceb..28f3d2c 100644
+--- a/src/resources.cpp
++++ b/src/resources.cpp
+@@ -7,10 +7,14 @@
+ // TODO: port these functions to different OS (Windows + MacOS).
+ 
+ extern "C" {
++#ifndef _WIN32
+ #include <sys/time.h>
+ #include <sys/resource.h>
++#endif
+ #include <sys/types.h>
++#ifndef _WIN32
+ #include <unistd.h>
++#endif
+ #include <string.h>
+ }
+ 
+diff --git a/src/signal.cpp b/src/signal.cpp
+index e4806fd..4393d3c 100644
+--- a/src/signal.cpp
++++ b/src/signal.cpp
+@@ -10,7 +10,9 @@
+ /*------------------------------------------------------------------------*/
+ 
+ extern "C" {
++#ifndef _WIN32
+ #include <unistd.h>
++#endif
+ }
+ 
+ /*------------------------------------------------------------------------*/
+@@ -42,7 +44,9 @@ static void (*SIGALRM_handler)(int);
+ 
+ void Signal::reset_alarm () {
+   if (!alarm_set) return;
++#ifndef _WIN32
+   (void) signal (SIGALRM, SIGALRM_handler);
++#endif
+   SIGALRM_handler = 0;
+   caught_alarm = false;
+   alarm_set = false;
+@@ -61,11 +65,13 @@ SIGNALS
+ }
+ 
+ const char * Signal::name (int sig) {
++#ifndef _WIN32
+ #define SIGNAL(SIG) \
+   if (sig == SIG) return # SIG;
+   SIGNALS
+ #undef SIGNAL
+   if (sig == SIGALRM) return "SIGALRM";
++#endif
+   return "UNKNOWN";
+ }
+ 

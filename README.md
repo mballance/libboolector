@@ -1,2 +1,2 @@
-# libboolector
-Multi-platform super-build project for Boolector and dependent libraries
+# pyboolector
+Super-build project for deploying Boolector as a Python module on PyPi

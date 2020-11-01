@@ -1,0 +1,26 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 8a60555..f864bf6 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -87,7 +87,7 @@ add_check_c_cxx_flag("-Wextra")
+ add_check_c_cxx_flag("-Wredundant-decls")
+ 
+ add_check_c_flag("-std=gnu99")
+-add_required_cxx_flag("-std=gnu++11")
++add_required_cxx_flag("-std=gnu++14")
+ 
+ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+   add_check_c_cxx_flag("-g3")
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index cf810c9..ec0f336 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -25,3 +25,8 @@ if(BUILD_BTOR2AIGER)
+ endif()
+ 
+ add_executable(btorsplit btorsplit.cpp)
++
++install(TARGETS btor2parser DESTINATION lib)
++install(TARGETS catbtor DESTINATION bin)
++install(TARGETS btorsplit DESTINATION bin)
++
