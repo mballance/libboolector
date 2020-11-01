@@ -12,7 +12,7 @@ file(WRITE
   "")
 
 execute_process(
-	COMMAND git apply ${PATCH_DIR}/cadical/cadical.patch
+	COMMAND git apply --reject --whitespace=fix ${PATCH_DIR}/cadical/cadical.patch
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	)
 
