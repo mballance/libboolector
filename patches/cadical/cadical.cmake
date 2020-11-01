@@ -1,7 +1,5 @@
 
-message("Hello ${MESSAGE}")
-message("${CMAKE_CURRENT_SOURCE_DIR}")
-message("${CMAKE_CURRENT_BINARY_DIR}")
+message("Patching cadical: PATCH_DIR=${PATCH_DIR} CMAKE_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}")
 
 file(COPY 
   ${PATCH_DIR}/cadical/CMakeLists.txt 
