@@ -111,10 +111,10 @@ index bc3bdc9..cc05d4b 100644
  
  }
 diff --git a/src/resources.cpp b/src/resources.cpp
-index 56b5ceb..28f3d2c 100644
+index 56b5ceb..9ca46d8 100644
 --- a/src/resources.cpp
 +++ b/src/resources.cpp
-@@ -7,10 +7,14 @@
+@@ -7,19 +7,34 @@
  // TODO: port these functions to different OS (Windows + MacOS).
  
  extern "C" {
@@ -125,10 +125,97 @@ index 56b5ceb..28f3d2c 100644
  #include <sys/types.h>
 +#ifndef _WIN32
  #include <unistd.h>
++#else
++#include <windows.h>
 +#endif
  #include <string.h>
  }
  
++#ifdef _WIN32
++#define popen _popen
++#define pclose _pclose
++#endif
++
+ namespace CaDiCaL {
+ 
+ double absolute_real_time () {
++#ifndef _WIN32
+   struct timeval tv;
+   if (gettimeofday (&tv, 0)) return 0;
+   return 1e-6 * tv.tv_usec + tv.tv_sec;
++#else
++  return GetTickCount()/1000;
++#endif
+ }
+ 
+ double Internal::real_time () {
+@@ -33,12 +48,16 @@ double Internal::real_time () {
+ // etc.  For different variants of Unix not all fields are meaningful.
+ 
+ double absolute_process_time () {
++#ifndef _WIN32
+   struct rusage u;
+   double res;
+   if (getrusage (RUSAGE_SELF, &u)) return 0;
+   res = u.ru_utime.tv_sec + 1e-6 * u.ru_utime.tv_usec;  // user time
+   res += u.ru_stime.tv_sec + 1e-6 * u.ru_stime.tv_usec; // + system time
+   return res;
++#else
++  return 0;
++#endif
+ }
+ 
+ double Internal::process_time () {
+@@ -50,9 +69,13 @@ double Internal::process_time () {
+ // This seems to work on Linux (man page says since Linux 2.6.32).
+ 
+ uint64_t maximum_resident_set_size () {
++#ifndef _WIN32
+   struct rusage u;
+   if (getrusage (RUSAGE_SELF, &u)) return 0;
+   return ((uint64_t) u.ru_maxrss) << 10;
++#else
++  return 0;
++#endif
+ }
+ 
+ // Unfortunately 'getrusage' on Linux does not support current resident set
+@@ -63,6 +86,7 @@ uint64_t maximum_resident_set_size () {
+ // '_SC_PAGESIZE' are available).
+ 
+ uint64_t current_resident_set_size () {
++#ifndef _WIN32
+   char path[40];
+   sprintf (path, "/proc/%" PRId64 "/statm", (int64_t) getpid ());
+   FILE * file = fopen (path, "r");
+@@ -71,6 +95,9 @@ uint64_t current_resident_set_size () {
+   int scanned = fscanf (file, "%" PRIu64 " %" PRIu64 "", &dummy, &rss);
+   fclose (file);
+   return scanned == 2 ? rss * sysconf (_SC_PAGESIZE) : 0;
++#else
++  return 0;
++#endif
+ }
+ 
+ /*------------------------------------------------------------------------*/
+@@ -83,6 +110,7 @@ static const int NUM_CORES = 4;
+ //
+ int number_of_cores (Internal * internal)
+ {
++#ifndef _WIN32
+ #ifdef QUIET
+   (void) internal;
+ #endif
+@@ -174,6 +202,9 @@ int number_of_cores (Internal * internal)
+   }
+ 
+   return res;
++#else
++  return 1;
++#endif
+ }
+ 
+ /*------------------------------------------------------------------------*/
 diff --git a/src/signal.cpp b/src/signal.cpp
 index e4806fd..4393d3c 100644
 --- a/src/signal.cpp

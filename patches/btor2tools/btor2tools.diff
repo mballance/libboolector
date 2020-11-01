@@ -15,7 +15,7 @@ diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
 index cf810c9..ec0f336 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -25,3 +25,8 @@ if(BUILD_BTOR2AIGER)
+@@ -25,3 +25,10 @@ if(BUILD_BTOR2AIGER)
  endif()
  
  add_executable(btorsplit btorsplit.cpp)
@@ -23,4 +23,6 @@ index cf810c9..ec0f336 100644
 +install(TARGETS btor2parser DESTINATION lib)
 +install(TARGETS catbtor DESTINATION bin)
 +install(TARGETS btorsplit DESTINATION bin)
++
++install(FILES btor2parser/btor2parser.h DESTINATION include/btor2parser)
 +

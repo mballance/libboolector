@@ -27,4 +27,21 @@ ExternalProject_Add(btor2tools
     -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}
   )
 
+ExternalProject_Add(boolector
+  PREFIX boolector
+  GIT_REPOSITORY https://github.com/boolector/boolector.git
+  PATCH_COMMAND cmake -DPATCH_DIR=${CMAKE_CURRENT_SOURCE_DIR}/patches -P ${CMAKE_CURRENT_SOURCE_DIR}/patches/boolector/boolector.cmake
+  CMAKE_CACHE_ARGS
+    -DCMAKE_C_COMPILER:STRING=${CMAKE_C_COMPILER}
+    -DCMAKE_CXX_COMPILER:STRING=${CMAKE_CXX_COMPILER}
+    -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
+    -DIS_WINDOWS_BUILD:BOOL=${WIN32}
+    -DBtor2Tools_LIBRARIES:PATH=${CMAKE_CURRENT_BINARY_DIR}/lib/btor2parser.lib
+    -DBtor2Tools_INCLUDE_DIR:PATH=${CMAKE_CURRENT_BINARY_DIR}/include
+    -DCaDiCaL_LIBRARIES:PATH=${CMAKE_CURRENT_BINARY_DIR}/lib/cadical.lib
+    -DCaDiCaL_INCLUDE_DIR:PATH=${CMAKE_CURRENT_BINARY_DIR}/include
+    -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}
+  )
+
+add_dependencies(boolector cadical btor2tools)
 

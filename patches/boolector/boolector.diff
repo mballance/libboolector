@@ -1,0 +1,191 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 770a92b..4e5198e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -188,7 +188,7 @@ set_option(USE_PICOSAT ON)
+ #       btorconfig.h and they are else not yet added to CMAKE_C(XX)_FLAGS at
+ #       file generation time (configure_file).
+ add_required_c_flag("-std=gnu99")
+-add_required_cxx_flag("-std=gnu++11")
++add_required_cxx_flag("-std=gnu++14")
+ 
+ add_check_c_cxx_flag("-W")
+ add_check_c_cxx_flag("-Wall")
+@@ -434,6 +434,7 @@ configure_file(
+ # Regression tests
+ 
+ # Get and configure google test
++if(NOT IS_WINDOWS_BUILD)
+ include(cmake/googletest.cmake)
+ fetch_googletest(
+     ${PROJECT_SOURCE_DIR}/cmake
+@@ -441,13 +442,16 @@ fetch_googletest(
+     )
+ 
+ enable_testing()
++endif()
+ 
+ #-----------------------------------------------------------------------------#
+ # Source directories
+ 
+ include_directories(src ${CMAKE_CURRENT_BINARY_DIR}/src)
+ add_subdirectory(src)
++if(NOT IS_WINDOWS_BUILD)
+ add_subdirectory(test)
++endif()
+ if(PYTHON)
+   add_subdirectory(src/api/python)
+ endif()
+diff --git a/src/boolector.c b/src/boolector.c
+index a9bf477..01defd5 100644
+--- a/src/boolector.c
++++ b/src/boolector.c
+@@ -38,6 +38,11 @@
+ #include <stdio.h>
+ #include <string.h>
+ 
++#ifdef _WIN32
++#define popen _popen
++#define pclose _pclose
++#endif
++
+ /*------------------------------------------------------------------------*/
+ 
+ static void
+diff --git a/src/btorimc.cc b/src/btorimc.cc
+index 1334bc0..1b39646 100644
+--- a/src/btorimc.cc
++++ b/src/btorimc.cc
+@@ -16,7 +16,9 @@
+ extern "C" {
+ #include <sys/stat.h>
+ #include <sys/types.h>
++#ifndef _WIN32
+ #include <unistd.h>
++#endif
+ };
+ 
+ #include <iostream>
+@@ -24,6 +26,11 @@ extern "C" {
+ #include <string>
+ #include <vector>
+ 
++#ifdef _WIN32
++#define popen _popen
++#define pclose _pclose
++#endif
++
+ using namespace std;
+ 
+ struct Var
+diff --git a/src/btormain.c b/src/btormain.c
+index 1a4a773..6f38bd7 100644
+--- a/src/btormain.c
++++ b/src/btormain.c
+@@ -29,7 +29,14 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#ifndef _WIN32
+ #include <unistd.h>
++#endif
++
++#ifdef _WIN32
++#define popen _popen
++#define pclose _pclose
++#endif
+ 
+ typedef struct BtorMainApp BtorMainApp;
+ static BtorMainApp *g_app;
+diff --git a/src/btormcmain.c b/src/btormcmain.c
+index d636cec..623283f 100644
+--- a/src/btormcmain.c
++++ b/src/btormcmain.c
+@@ -29,6 +29,11 @@
+ #define BTOR_MC_SUCC_EXIT 0
+ #define BTOR_MC_ERR_EXIT 1
+ 
++#ifdef _WIN32
++#define popen _popen
++#define pclose _pclose
++#endif
++
+ /*------------------------------------------------------------------------*/
+ 
+ static void
+diff --git a/src/btortrapi.c b/src/btortrapi.c
+index 9963203..128746f 100644
+--- a/src/btortrapi.c
++++ b/src/btortrapi.c
+@@ -9,6 +9,11 @@
+ 
+ #include "btortrapi.h"
+ 
++#ifdef _WIN32
++#define popen _popen
++#define pclose _pclose
++#endif
++
+ void
+ btor_trapi_print (Btor *btor, const char *msg, ...)
+ {
+diff --git a/src/btoruntrace.c b/src/btoruntrace.c
+index 96f252e..bf52f19 100644
+--- a/src/btoruntrace.c
++++ b/src/btoruntrace.c
+@@ -15,7 +15,9 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#ifndef _WIN32
+ #include <unistd.h>
++#endif
+ 
+ #include "boolector.h"
+ #include "btoropt.h"
+diff --git a/src/parser/btorbtor.c b/src/parser/btorbtor.c
+index 6fe4b47..06a71eb 100644
+--- a/src/parser/btorbtor.c
++++ b/src/parser/btorbtor.c
+@@ -25,6 +25,10 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
++#ifdef _WIN32
++#define strcasecmp _stricmp
++#endif
++
+ /*------------------------------------------------------------------------*/
+ 
+ void boolector_set_btor_id (Btor *, BoolectorNode *, int32_t);
+diff --git a/src/utils/btorutil.c b/src/utils/btorutil.c
+index 4fa51f8..062eda2 100644
+--- a/src/utils/btorutil.c
++++ b/src/utils/btorutil.c
+@@ -564,7 +564,9 @@ btor_util_current_time (void)
+ #ifdef BTOR_HAVE_STAT
+ #include <sys/stat.h>
+ #include <sys/types.h>
++#ifndef _WIN32
+ #include <unistd.h>
++#endif
+ int32_t
+ btor_util_file_exists (const char *path)
+ {
+diff --git a/test/CMakeLists.txt b/test/CMakeLists.txt
+index 0d09ef1..4a291bb 100644
+--- a/test/CMakeLists.txt
++++ b/test/CMakeLists.txt
+@@ -39,7 +39,11 @@ set(test_names
+ foreach(test ${test_names})
+   add_executable (test${test} test_${test}.cpp)
+   target_include_directories(test${test} PRIVATE ${PROJECT_SOURCE_DIR}/test/new_test)
+-  target_link_libraries(test${test} boolector m)
++  if(NOT IS_WINDOWS_BUILD)
++    target_link_libraries(test${test} boolector m)
++  else()
++    target_link_libraries(test${test} boolector)
++  endif()
+   target_link_libraries(test${test} gtest_main)
+   set_target_properties(test${test} PROPERTIES OUTPUT_NAME test${test})
+   add_test(${test} ${CMAKE_BINARY_DIR}/bin/tests/test${test})
